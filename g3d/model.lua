@@ -13,7 +13,7 @@ local vectorNormalize = vectors.normalize
 ----------------------------------------------------------------------------------------------------
 -- define a model class
 ----------------------------------------------------------------------------------------------------
---prof = require("jprofiler/jprof")
+--prof = require("libs/jprofiler/jprof")
 
 local model = {}
 model.__index = model
@@ -32,7 +32,7 @@ model.shader = g3d.shader
 -- a model must be given a .obj file or equivalent lua table, and a texture
 -- translation, rotation, and scale are all 3d vectors and are all optional
 local function newModel(verts, texture, translation, rotation, scale)
-	--prof.push("model.newModel")
+	--_JPROFILER.push("model.newModel")
 	local self = setmetatable({}, model)
 
 	-- if verts is a string, use it as a path to a .obj file
@@ -44,20 +44,20 @@ local function newModel(verts, texture, translation, rotation, scale)
 	-- if texture is a string, use it as a path to an image file
 	-- otherwise texture is already an image, so don't bother
 	if type(texture) == "string" then
-		texture = love.graphics.newImage(texture)
+		texture = lg3d.newImage(texture)
 	end
 
 	-- initialize my variables
 	self.verts = verts
 	self.texture = texture
-	self.mesh = love.graphics.newMesh(self.vertexFormat, self.verts, "triangles")
+	self.mesh =	lg3d.newMesh(self.vertexFormat, self.verts, "triangles")
 	self.mesh:setTexture(self.texture)
 	self.matrix = newMatrix()
 	if type(scale) == "number" then
 		scale = { scale, scale, scale }
 	end
 	self:setTransform(translation or { 0, 0, 0 }, rotation or { 0, 0, 0 }, scale or { 1, 1, 1 })
---	prof.pop("model.newModel")
+	--	_JPROFILER.pop("model.newModel")
 	return self
 end
 
@@ -81,7 +81,7 @@ function model:makeNormals(isFlipped)
 		vp[8], v[8], vn[8] = n_3, n_3, n_3
 	end
 
-	self.mesh = love.graphics.newMesh(self.vertexFormat, self.verts, "triangles")
+	self.mesh = lg3d.newMesh(self.vertexFormat, self.verts, "triangles")
 	self.mesh:setTexture(self.texture)
 end
 
@@ -149,15 +149,15 @@ end
 -- draw the model
 function model:draw(shader)
 	local shader = shader or self.shader
-	love.graphics.setShader(shader)
+	lg3d.setShader(shader)
 	shader:send("modelMatrix", self.matrix)
 	shader:send("viewMatrix", camera.viewMatrix)
 	shader:send("projectionMatrix", camera.projectionMatrix)
 	if shader:hasUniform("isCanvasEnabled") then
-		shader:send("isCanvasEnabled", love.graphics.getCanvas() ~= nil)
+		shader:send("isCanvasEnabled", lg3d.getCanvas() ~= nil)
 	end
-	love.graphics.draw(self.mesh)
-	love.graphics.setShader()
+	lg3d.draw(self.mesh)
+	lg3d.setShader()
 end
 
 -- the fallback function if ffi was not loaded
@@ -201,7 +201,7 @@ if success then
 		end
 
 		self.mesh:release()
-		self.mesh = love.graphics.newMesh(self.vertexFormat, #self.verts, "triangles")
+		self.mesh = lg3d.newMesh(self.vertexFormat, #self.verts, "triangles")
 		self.mesh:setVertices(data)
 		self.mesh:setTexture(self.texture)
 		self.verts = nil
